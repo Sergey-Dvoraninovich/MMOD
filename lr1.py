@@ -85,8 +85,7 @@ def get_data(matrix, n, m):
     rxy = cov / math.sqrt(dx * dy)
     return mx, my, dx, dy, cov, rxy
 
-def get_interval_data(values, n, m):
-    a = 0.05
+def get_interval_data(values):
     values_amount = len(values)
     y_values = []
     x_values = []
@@ -104,17 +103,38 @@ def get_interval_data(values, n, m):
         sy += (y_values[i] - y) ** 2
     sx /= values_amount - 1
     sy /= values_amount - 1
-    x_delta = sx * stats.t.ppf((2 - a)/2, 10)
+    return x, y, sx, sy
+
+
+def get_m_intervals(values):
+    a = 0.05
+    values_amount = len(values)
+    x, y, sx, sy = get_interval_data(values)
+    x_delta = sx * stats.t.ppf((2 - a) / 2, 10)
     x_delta /= math.sqrt(values_amount - 1)
     min_x = x - x_delta
     max_x = x + x_delta
-    y_delta = sy * stats.t.ppf((2 - a)/2, 10)
+    y_delta = sy * stats.t.ppf((2 - a) / 2, 10)
     y_delta /= math.sqrt(values_amount - 1)
     min_y = y - y_delta
     max_y = y + y_delta
     return min_x, max_x, min_y, max_y
 
+def get_d_intervals(values):
+    a = 0.05
+    values_amount = len(values)
+    x, y, sx, sy = get_interval_data(values)
+    
+    min_x = values_amount * sx
+    min_x /= stats.chi2.isf(df=values_amount, q=a/2)
+    max_x = values_amount * sx
+    max_x /=stats.chi2.isf(df=values_amount, q=1 - a/2)
 
+    min_y = values_amount * sy
+    min_y /= stats.chi2.isf(df=values_amount, q=a/2)
+    max_y = values_amount * sy
+    max_y /= stats.chi2.isf(df=values_amount, q=1 - a/2)
+    return min_x, max_x, min_y, max_y
 
 def check_mizes(matrix, generated_matrix, n, m):
     a = 0.05
@@ -196,14 +216,17 @@ print("--- rxy ---- " + str(rxy))
 
 generated_matrix = normalize_matrix(values, values_amount, n, m)
 mx, my, dx, dy, cov, rxy = get_data(generated_matrix, n, m)
-min_x, max_x, min_y, max_y = get_interval_data(values, n, m)
+min_x, max_x, min_y, max_y = get_m_intervals(values)
 print("\n" + str(np.array(generated_matrix)))
 print("--- M[X] --- " + str(mx))
 print(str(min_x) + " - " + str(max_x))
 print("--- M[Y] --- " + str(my))
 print(str(min_y) + " - " + str(max_y))
+min_x, max_x, min_y, max_y = get_d_intervals(values)
 print("--- D[X] --- " + str(dx))
+print(str(min_x) + " - " + str(max_x))
 print("--- D[Y] --- " + str(dy))
+print(str(min_y) + " - " + str(max_y))
 print("--- cov ---- " + str(cov))
 print("--- rxy ---- " + str(rxy))
 
@@ -214,9 +237,4 @@ print("Critical value - " + str(critical_value))
 print("        Result - " + str(result))
 #print(stats.chi2.isf(df=2, q=0.025))
 #print(stats.t.ppf((1 + 0.95)/2, 9))
-
-get_interval_data(values, n, m)
-
-
-
 
