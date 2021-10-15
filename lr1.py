@@ -1,8 +1,9 @@
 import numpy as np
 import math
 import scipy
+from scipy import optimize
 from scipy import stats
-import matplotlib.pyplot as plt
+from scipy import special
 from plots import histogram_3d, histogram
 
 def make_line(matrix):
@@ -124,7 +125,7 @@ def get_d_intervals(values):
     a = 0.05
     values_amount = len(values)
     x, y, sx, sy = get_interval_data(values)
-    
+
     min_x = values_amount * sx
     min_x /= stats.chi2.isf(df=values_amount, q=a/2)
     max_x = values_amount * sx
@@ -135,6 +136,16 @@ def get_d_intervals(values):
     max_y = values_amount * sy
     max_y /= stats.chi2.isf(df=values_amount, q=1 - a/2)
     return min_x, max_x, min_y, max_y
+
+def get_r_interval(gen_cov, dx, dy, n):
+    a = 0.05
+    z = optimize.fsolve(lambda x: special.erf(x) - a, 0)[0]
+    rxy = gen_cov / math.sqrt(dx * dy)
+    a = 0.5 * math.log((1 + rxy) / (1 - rxy)) - z / math.sqrt(n-3)
+    b = 0.5 * math.log((1 + rxy) / (1 - rxy)) + z / math.sqrt(n-3)
+    min = (math.e ** (2*a) - 1)/(math.e ** (2*a) + 1)
+    max = (math.e ** (2*b) - 1)/(math.e ** (2*b) + 1)
+    return min, max
 
 def check_mizes(matrix, generated_matrix, n, m):
     a = 0.05
@@ -211,10 +222,10 @@ print("--- M[X] --- " + str(mx))
 print("--- M[Y] --- " + str(my))
 print("--- D[X] --- " + str(dx))
 print("--- D[Y] --- " + str(dy))
-print("--- cov ---- " + str(cov))
 print("--- rxy ---- " + str(rxy))
 
 generated_matrix = normalize_matrix(values, values_amount, n, m)
+base_dx, base_dy = dx, dy
 mx, my, dx, dy, cov, rxy = get_data(generated_matrix, n, m)
 min_x, max_x, min_y, max_y = get_m_intervals(values)
 print("\n" + str(np.array(generated_matrix)))
@@ -227,14 +238,12 @@ print("--- D[X] --- " + str(dx))
 print(str(min_x) + " - " + str(max_x))
 print("--- D[Y] --- " + str(dy))
 print(str(min_y) + " - " + str(max_y))
-print("--- cov ---- " + str(cov))
+min, max = get_r_interval(cov, base_dx, base_dy, len(values))
 print("--- rxy ---- " + str(rxy))
+print(str(min) + " - " + str(max))
 
 
 print("\n------- Mizes criteria -------")
 a, critical_value, result = check_mizes(matrix, generated_matrix, n, m)
 print("Critical value - " + str(critical_value))
 print("        Result - " + str(result))
-#print(stats.chi2.isf(df=2, q=0.025))
-#print(stats.t.ppf((1 + 0.95)/2, 9))
-

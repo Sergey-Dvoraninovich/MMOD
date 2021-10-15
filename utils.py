@@ -41,30 +41,4 @@ def get_x():
 
 
 
-# n = 3
-# m = 5
-# p = get_matrix(n, m)
-# q_line = get_q_line(p, n, m)
-# print(q_line)
-# l_line = get_l_line(q_line, n)
-# print(l_line)
-#
-# x_line = []
-# rs_line = []
-# for _ in range(10):
-#     x = get_x()
-#     if x < l_line[0]:
-#         k = 0
-#     else:
-#         pos = 1
-#         while pos < len(l_line):
-#             if x > l_line[pos - 1] and x < l_line[pos]:
-#                 k = pos
-#                 break
-#             pos += 1
-#     x_line.append(k + 1)
-# print(x_line)
-
-
-
 
