@@ -151,12 +151,17 @@ def check_mizes(matrix, generated_matrix, n, m):
     a = 0.05
     critical_value = 0.461
     result = 0
-    for i in range(n):
-        for j in range(m):
-            delta = matrix[i][j]
-            delta -= generated_matrix[i][j]
-            delta **= 2
-            result += delta
+    m_line = make_line(matrix)
+    gen_line = make_line(generated_matrix)
+    m_sum = 0
+    gen_sum = 0
+    for i in range(n*m):
+        m_sum += m_line[i]
+        gen_sum += gen_line[i]
+        delta = m_sum
+        delta -= gen_sum
+        delta **= 2
+        result += delta
     result = 1 / (12 * n * m) + result
     return a, critical_value, result
 
@@ -203,6 +208,8 @@ for _ in range(values_amount):
     result = generate_value(matrix, n, m)
     values.append(result)
 
+success = True
+
 y_appearances, x_appearances = get_appearances(values, n, m)
 print("\n--- X info ---")
 print(x_appearances)
@@ -231,19 +238,51 @@ min_x, max_x, min_y, max_y = get_m_intervals(values)
 print("\n" + str(np.array(generated_matrix)))
 print("--- M[X] --- " + str(mx))
 print(str(min_x) + " - " + str(max_x))
+if min_x < mx and mx < max_x:
+    print("OK")
+else:
+    print("Invalid M interval for x")
+    success = False
+
 print("--- M[Y] --- " + str(my))
 print(str(min_y) + " - " + str(max_y))
+if min_y < my and my < max_y:
+    print("OK")
+else:
+    print("Invalid M interval for y")
+    success = False
+
 min_x, max_x, min_y, max_y = get_d_intervals(values)
 print("--- D[X] --- " + str(dx))
 print(str(min_x) + " - " + str(max_x))
+if min_x < dx and dx < max_x:
+    print("OK")
+else:
+    print("Invalid D interval for x")
+    success = False
+
 print("--- D[Y] --- " + str(dy))
 print(str(min_y) + " - " + str(max_y))
-min, max = get_r_interval(cov, base_dx, base_dy, len(values))
+if min_y < dy and dy < max_y:
+    print("OK")
+else:
+    print("Invalid D interval for y")
+    success = False
+
 print("--- rxy ---- " + str(rxy))
-print(str(min) + " - " + str(max))
 
 
 print("\n------- Mizes criteria -------")
 a, critical_value, result = check_mizes(matrix, generated_matrix, n, m)
 print("Critical value - " + str(critical_value))
 print("        Result - " + str(result))
+if result < critical_value:
+    print("                 OK")
+else:
+    print("Invalid Mizes criteria")
+    success = False
+
+if success:
+    print("Valid result")
+else:
+    print("Inalid result")
