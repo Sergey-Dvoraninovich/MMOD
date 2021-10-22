@@ -1,6 +1,7 @@
 import random
 from enum import Enum
 import bisect
+import math
 
 class ActionType(Enum):
     APPEAR = 1
@@ -41,28 +42,59 @@ class Action:
     def __str__(self):
         return '({}, {}, {})'.format(self.request.id, self.time, self.action_type)
 
+def calculate_theoretical_data(n, m, lambda_val, mu, v):
+     alpha = lambda_val / mu
+     beta = v / mu
+     p0 = 0
+     for k in range(n+1):
+         p0 += (alpha ** k) / math.factorial(k)
+     line_sum = 0
+     for k in range(m):
+         line_sum += (alpha ** (k + 1)) / (n ** (k + 1))
+     line_sum *= (alpha ** n) / math.factorial(n)
+     p0 += (alpha ** n+1) / (math.factorial(n+1)*(n - alpha))
+     p0 = 1 / p0
+     theoretical_p = [p0]
+     for i in range(n):
+         k = i + 1
+         pk = ((alpha ** k) / math.factorial(k)) * p0
+         theoretical_p.append(pk)
+     for i in range(m):
+         s = i + 1
+         pk = ((alpha ** (n + s)) / (math.factorial(n) * (n ** s))) * p0
+         theoretical_p.append(pk)
+     line_requests_theoretical = alpha ** (n + 1)
+     line_requests_theoretical /= n * math.factorial(n) * ((1 - alpha/n) ** 2)
+     line_requests_theoretical *= p0
+     decline_probability = beta * line_requests_theoretical / alpha
+     return  decline_probability, line_requests_theoretical, theoretical_p
+
+
 def generate_requests(lambda_val, work_time, v):
     requests = []
     for i in range(lambda_val * work_time):
         start_time = random.uniform(0, work_time)
-        waiting_timeout = random.expovariate(1/v)
+        waiting_timeout = random.expovariate(v)
         request = Request(id=i+1, start_time=start_time, waiting_timeout=waiting_timeout)
         requests.append(request)
     requests.sort()
+    for i in range(lambda_val * work_time):
+        requests[i].id = i+1
     return requests
 
 def add_to_processing(request, actions, time=None):
     if time is None:
         time = request.start_time
     processing_end_time = time
-    processing_end_time += random.expovariate(1/mu)
+    processing_end_time += random.expovariate(mu)
     bisect.insort(actions, Action(request, processing_end_time, ActionType.FINISH_PROCESSING))
 
-m = 9
+n = 5
+m = 5
 lambda_val = 2
-mu = 10
-v = 10
-work_time = 20
+mu = 0.5
+v = 0.5
+work_time = 9000
 
 requests = generate_requests(lambda_val, work_time, v)
 actions = []
@@ -79,16 +111,19 @@ while len(actions) != 0:
     current_time = current_action.time
 
     if current_action.action_type == ActionType.APPEAR:
-        if processing_size < m:
+        if processing_size < n:
             add_to_processing(request, actions)
             processing_size += 1
             state_log.append((processing_size, len(line), current_time))
-        else:
+        elif len(line) < m:
             waiting_timeout = request.waiting_timeout
             waiting_timeout += request.start_time
             bisect.insort(actions, Action(request, waiting_timeout, ActionType.WAITING_TIMEOUT))
             line.append(request)
             state_log.append((processing_size, len(line), current_time))
+        else:
+            request.is_processed = False
+            request.waiting_time = 0
 
     if current_action.action_type == ActionType.FINISH_PROCESSING:
         request.processing_time = current_time - request.start_time
@@ -115,18 +150,44 @@ while len(actions) != 0:
 
 
 
-for event in state_log:
-    print ("[" + str(event[0]) + " processing][" + str(event[1]) + " in line]["+str(event[2]) + "s]")
+# for event in state_log:
+#     print ("[" + str(event[0]) + " processing][" + str(event[1]) + " in line]["+str(event[2]) + "s]")
+#
+# for request in requests:
+#     line = ""
+#     if request.is_processed != True:
+#         line = "-DECLINED- "
+#     if request.is_processed is None:
+#         line = "-ERROR- "
+#     line += "[" + str(request.id) + "]"
+#     line += "[" + str(request.processing_time) + "s processed]"
+#     line += "[" + str(request.waiting_time) + "s in line]"
+#     print (line)
 
-for request in requests:
-    line = ""
-    if request.is_processed != True:
-        line = "-DECLINED- "
-    if request.is_processed is None:
-        line = "-ERROR- "
-    line += "[" + str(request.id) + "]"
-    line += "[" + str(request.processing_time) + "s processed]"
-    line += "[" + str(request.waiting_time) + "s in line]"
-    print (line)
 
+decline_probability, line_requests_theoretical, theoretical_p = calculate_theoretical_data(n, m, lambda_val, mu, v)
+print("Theoretical probabilities")
+print("   in processing: " + str(theoretical_p[:n+1]))
+print("         in line: " + str(theoretical_p[n+1:]))
+print("Theoretical decline probability")
+print(decline_probability)
+print("Theoretical requests in query")
+print(line_requests_theoretical)
 
+empirical_p = []
+for _ in range(n+m+1):
+    empirical_p.append(0)
+previous_period = state_log.pop(0)
+total_work_time = 0
+for period in state_log:
+    duration = period[2] - previous_period[2]
+    total_work_time += duration
+    empirical_p[previous_period[0] + previous_period[1]] += duration
+    previous_period = period
+for i in range(n+m+1):
+    empirical_p[i] /= total_work_time
+print("Theoretical probabilities")
+print("   in processing: " + str(empirical_p[:n+1]))
+print("         in line: " + str(empirical_p[n+1:]))
+print("Total work time")
+print(total_work_time)
