@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
+import scipy.stats as st
+from scipy.signal import _savitzky_golay
 
 def histogram_3d(values, n, m):
     x_val = []
@@ -87,12 +88,19 @@ def build_stationarity_plot(stationarity_data, work_times, colors, n, m):
     plt.legend(legend)
     plt.show()
 
-def build_stationarity_diff_plot(differences, work_times):
-    x = np.linspace(0, 2 * np.pi, 100)
-    y = np.sin(x) + np.random.random(100) * 0.2
-    yhat = savitzky_golay(y, 51, 3)  # window size 51, polynomial order 3
+def build_stationarity_diff_plot(differences, work_times, n, m):
+    x = np.array(work_times[::-1])
+    y = np.array(differences[::-1])
+    yhat = _savitzky_golay.savgol_filter(y, 3, 2)
 
     plt.plot(x, y)
     plt.plot(x, yhat, color='red')
+
+    chi_vale = st.chi2.isf(df=n + m - 5, q=0.01)
+    y = []
+    for _ in range(len(x)):
+        y.append(chi_vale)
+
+    plt.plot(x, y, color='blue')
     plt.show()
 
