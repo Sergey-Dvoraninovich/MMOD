@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 def histogram_3d(values, n, m):
     x_val = []
@@ -32,3 +33,66 @@ def histogram(appearances, n, expected_probabilities):
     plt.bar(indexes, appearances)
     plt.title(expected_probabilities)
     plt.show()
+
+def build_diff_plot(theoretical_p, empirical_p, n, m):
+    max_val = int(max(max(theoretical_p), max(empirical_p)) * 15) / 10
+    states = [" "]
+    for i in range(0, n + 1):
+        states.append(str(i))
+    for i in range(1, m + 1):
+        states.append("(" + str(i) + ")")
+
+    index = np.arange(n + m + 2)
+    bw = 0.4
+    plt.axis([0, n + m + 2, 0, max_val])
+    plt.title('Final probability states difference', fontsize=20)
+    line = [0.]
+    line.extend(theoretical_p)
+    plt.bar(index - 0.5 * bw, line, bw, color='b')
+    line = [0.]
+    line.extend(empirical_p)
+    plt.bar(index + 0.5 * bw, line, bw, color='r')
+    plt.xticks(index, states)
+    plt.legend(['Theoretical probabilities', 'Empirical probabilities'])
+    plt.show()
+
+def build_stationarity_plot(stationarity_data, work_times, colors, n, m):
+    states = [" "]
+    for i in range(0, n + 1):
+        states.append(str(i))
+    for i in range(1, m + 1):
+        states.append("(" + str(i) + ")")
+    index = np.arange(n + m + 2)
+    plt.xticks(index, states)
+
+    bw = 0.4
+    plt.axis([0, n + m + 2, 0, 0.3])
+    plt.title('Final probability states difference', fontsize=20)
+
+    line = [0.]
+    line.extend(stationarity_data[0])
+    plt.bar(index - 0.5 * bw, line, bw, color='b')
+    legend = ['Theoretical probabilities']
+
+
+    offset = 0
+    for i in range(1, len(stationarity_data)):
+        line = [0.]
+        line.extend(stationarity_data[i])
+        bw *= 0.5
+        plt.bar(index + 0.5 * bw + offset, line, bw, color=colors[i-1])
+        offset += bw
+        legend.append('Empirical probabilities ' + str(work_times[i-1]) + "s")
+
+    plt.legend(legend)
+    plt.show()
+
+def build_stationarity_diff_plot(differences, work_times):
+    x = np.linspace(0, 2 * np.pi, 100)
+    y = np.sin(x) + np.random.random(100) * 0.2
+    yhat = savitzky_golay(y, 51, 3)  # window size 51, polynomial order 3
+
+    plt.plot(x, y)
+    plt.plot(x, yhat, color='red')
+    plt.show()
+
