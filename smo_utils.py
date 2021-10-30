@@ -274,7 +274,7 @@ def count_xi_diffs(stationarity_data, n, m, lambda_val, work_time):
         differences.append(difference)
     return differences
 
-def prind_data(n, m, lambda_val, mu, v, state_log, requests):
+def print_data(n, m, lambda_val, mu, v, state_log, requests):
     theoretical_p, A, p_decline, L_line, L_smo, T_line, T_smo, n_processing = calculate_theoretical_data(n, m, lambda_val, mu, v)
     print("\nTheoretical probabilities")
     print("   in processing: " + str(theoretical_p[:n + 1]))
@@ -314,3 +314,8 @@ def prind_data(n, m, lambda_val, mu, v, state_log, requests):
     empirical_T_smo = get_time_in_smo_lr3(requests, n, m)
     print("Empirical time in SMO")
     print(empirical_T_smo)
+
+def get_data(n, m, lambda_val, mu, v, state_log, requests):
+    theoretical_p, A, p_decline, L_line, L_smo, T_line, T_smo, n_processing = calculate_theoretical_data(n, m, lambda_val, mu, v)
+    empirical_p = get_empirical_p(state_log, n, m)
+    return theoretical_p, empirical_p

@@ -1,6 +1,5 @@
-from plots import build_diff_plot, build_stationarity_plot, build_stationarity_diff_plot
-from smo_utils import run_model, get_time_in_smo, get_empirical_p, get_requests_in_smo, get_time_in_line, get_requests_in_query, get_decline_probability, get_requests_in_processing, get_stationarity_data, generate_requests, calculate_theoretical_data, count_xi_diffs
-
+from plots import state_log_stationarity_plot
+from smo_utils import run_model, get_time_in_smo, get_empirical_p, get_requests_in_smo, get_time_in_line, get_requests_in_query, get_decline_probability, get_requests_in_processing, get_stationarity_data, generate_requests, calculate_theoretical_data, count_xi_diffs, build_diff_plot, build_stationarity_plot
 n = 5
 m = 4
 lambda_val = 2
@@ -9,6 +8,8 @@ v = 0.5
 work_time = 900
 
 state_log, requests = run_model(n, m, lambda_val, mu, v, work_time)
+
+state_log_stationarity_plot(state_log, n, m)
 
 work_times = [3600, 360, 60]
 stationarity_data = get_stationarity_data(n, m, lambda_val, mu, v, work_times)

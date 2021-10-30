@@ -1,7 +1,7 @@
 import random
 import bisect
-import scipy.stats as st
-from smo_utils import Action, ActionType, generate_requests, Request, prind_data
+from plots import build_diff_plot, build_stationarity_plot
+from smo_utils import Action, ActionType, generate_requests, Request, print_data, get_data, get_stationarity_data
 
 def run_model(n, m, lambda_val, mu, v, work_time):
     prev_time = 0
@@ -78,7 +78,7 @@ s_fine = 100
 
 state_log, requests, s_waiting_time = run_model(n, m, lambda_val, mu, v, work_time)
 
-prind_data(n, m, lambda_val, mu, v, state_log, requests)
+print_data(n, m, lambda_val, mu, v, state_log, requests)
 
 total_time_minutes = int(s_waiting_time / days_amount)
 total_fine = s_fine * total_time_minutes / 60
@@ -87,6 +87,13 @@ print("\nTotal fine")
 print(total_fine)
 print("Total waiting hours")
 print(str(total_time_minutes // 60) + "h " + str(total_time_minutes % 50) + "m")
+
+theoretical_p, empirical_p = get_data(n, m, lambda_val, mu, v, state_log, requests)
+build_diff_plot(theoretical_p, empirical_p, n, m, 4)
+colors = ['#873e44', '#ab5c68', '#cc9293']
+work_times = [(24 * 60) * 1000, (24 * 60) * 100, (24 * 60) * 2]
+stationarity_data = get_stationarity_data(n, m, lambda_val, mu, v, work_times)
+build_stationarity_plot(stationarity_data, work_times, colors, n, m, 4)
 
 
 
